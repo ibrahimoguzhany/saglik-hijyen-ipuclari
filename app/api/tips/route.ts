@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTips, createTip } from '@/app/lib/db';
 import { jwtVerify } from 'jose';
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
-}
-
 interface JWTPayload {
   userId: number;
   role: string;
@@ -18,7 +13,13 @@ async function authenticateUser(request: NextRequest) {
     return null;
   }
 
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET environment variable is not set');
+    return null;
+  }
+
   try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const verified = await jwtVerify(token, secret);
     const payload = verified.payload as unknown as JWTPayload;
     return payload;
