@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface User {
   id: number;
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     checkAuth();
@@ -108,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(null);
+      router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

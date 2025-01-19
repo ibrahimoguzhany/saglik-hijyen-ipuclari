@@ -10,7 +10,7 @@ interface DecodedToken extends JwtPayload {
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('authToken')?.value;
 
     if (!token) {
       return NextResponse.json(

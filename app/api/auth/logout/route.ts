@@ -6,7 +6,7 @@ export async function POST() {
   });
 
   // Auth token'ı sil
-  response.cookies.delete('auth-token');
+  response.cookies.delete('authToken');
 
   return response;
 } 

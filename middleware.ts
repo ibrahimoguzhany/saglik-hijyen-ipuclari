@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-export const runtime = 'edge';
+export const runtime = 'experimental-edge';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key');
 
