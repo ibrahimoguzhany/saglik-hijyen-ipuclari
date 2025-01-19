@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTips, createTip } from '@/app/lib/db';
 import { jwtVerify } from 'jose';
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key');
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
 
 interface JWTPayload {
   userId: number;

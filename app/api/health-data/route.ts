@@ -23,10 +23,10 @@ export async function POST(request: Request) {
     }
 
     // Veriyi kaydet
-    upsertHealthData(userId, data);
+    await upsertHealthData(userId, data);
 
     // Güncel verileri getir
-    const updatedData = getHealthData(userId);
+    const updatedData = await getHealthData(userId);
 
     return NextResponse.json({
       message: 'Veri başarıyla kaydedildi',
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const healthData = getHealthData(userId);
+    const healthData = await getHealthData(userId);
 
     return NextResponse.json({ data: healthData });
   } catch (error) {
