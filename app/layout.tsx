@@ -7,7 +7,7 @@ import { AuthProvider } from "./hooks/useAuth";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sağlık ve Hijyen İpuçları",
+  title: "Sağlıklı Yaşam",
   description: "Sağlıklı yaşam ve hijyen konusunda faydalı bilgiler ve hatırlatmalar",
 };
 

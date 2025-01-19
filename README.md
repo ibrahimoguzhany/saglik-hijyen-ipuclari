@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Web Uygulaması
 
-## Getting Started
+Bu proje [Next.js](https://nextjs.org) kullanılarak geliştirilmiş bir web uygulamasıdır.
 
-First, run the development server:
+## Kurulum Gereksinimleri
 
+Projeyi çalıştırmadan önce aşağıdaki yazılımların bilgisayarınızda kurulu olduğundan emin olun:
+
+- [Node.js](https://nodejs.org/) (v18 veya daha yüksek versiyon)
+- npm (Node.js ile birlikte gelir) veya yarn veya pnpm
+
+## Kurulum Adımları
+
+1. Projeyi bilgisayarınıza indirin:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone [proje-repository-url]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Proje klasörüne gidin:
+```bash
+cd [proje-klasörü]
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Bağımlılıkları yükleyin:
+```bash
+npm install
+# veya
+yarn install
+# veya
+pnpm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Projeyi Çalıştırma
 
-## Learn More
+1. Geliştirme sunucusunu başlatın:
+```bash
+npm run dev
+# veya
+yarn dev
+# veya
+pnpm dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+2. Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresine giderek uygulamayı görüntüleyebilirsiniz.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Yapı ve Özellikler
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Modern Next.js 14 App Router yapısı
+- TypeScript desteği
+- Responsive tasarım
+- Admin paneli
 
-## Deploy on Vercel
+## Admin Paneli Erişimi
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Admin paneline erişmek için:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. [http://localhost:3000/admin](http://localhost:3000/admin) adresine gidin
+2. Aşağıdaki bilgilerle giriş yapın:
+
+```
+Email: admin@example.com
+Şifre: admin123
+```
+
+## Yardımcı Kaynaklar
+
+- [Next.js Dokümantasyonu](https://nextjs.org/docs)
+- [Next.js Öğreticisi](https://nextjs.org/learn)
+- [Next.js GitHub Deposu](https://github.com/vercel/next.js)
+
+## Sorun Giderme
+
+Eğer kurulum sırasında sorunlarla karşılaşırsanız:
+
+1. Node.js versiyonunuzun uyumlu olduğundan emin olun
+2. node_modules klasörünü silip yeniden npm install yapın
+3. .next klasörünü silip yeniden build alın
+
+## Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.
