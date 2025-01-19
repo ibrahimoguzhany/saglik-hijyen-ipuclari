@@ -2,18 +2,21 @@ import bcrypt from 'bcryptjs';
 import { getDb, formatQueryResult } from './db.config';
 
 // Initialize database connection
-const db = getDb();
-const isProduction = process.env.NODE_ENV === 'production';
+let db: any = null;
+
+// Initialize database asynchronously
+const initDb = async () => {
+  if (!db) {
+    db = await getDb();
+  }
+  return db;
+};
 
 // Helper function to execute queries
 async function executeQuery(query: string, params: any[] = []) {
-  if (isProduction) {
-    const result = await (db as any).query(query, params);
-    return formatQueryResult(result);
-  } else {
-    const stmt = (db as any).prepare(query);
-    return params.length > 0 ? stmt.run(...params) : stmt.all();
-  }
+  const database = await initDb();
+  const result = await database.query(query, params);
+  return formatQueryResult(result);
 }
 
 // User operations
@@ -40,7 +43,7 @@ export async function createUser(data: {
     ]);
     return { id: result[0]?.id };
   } catch (error: any) {
-    if (error.code === '23505' || error.code === 'SQLITE_CONSTRAINT') {
+    if (error.code === '23505') {
       throw new Error('Bu e-posta adresi zaten kullanımda');
     }
     throw error;
@@ -103,16 +106,18 @@ export async function createReminder(userId: number, data: {
   const query = `
     INSERT INTO reminders (user_id, title, time, type, is_active)
     VALUES ($1, $2, $3, $4, $5)
-    RETURNING id
+    RETURNING id, title, time, type, is_active
   `;
   
-  return executeQuery(query, [
+  const result = await executeQuery(query, [
     userId,
     data.title,
     data.time,
     data.type,
     data.isActive ?? true
   ]);
+  
+  return result[0];
 }
 
 export async function getReminders(userId: number) {
@@ -136,16 +141,19 @@ export async function updateReminder(userId: number, reminderId: number, data: {
     RETURNING id
   `;
   
-  return executeQuery(query, [data.isActive, reminderId, userId]);
+  const result = await executeQuery(query, [data.isActive, reminderId, userId]);
+  return result[0];
 }
 
 export async function deleteReminder(userId: number, reminderId: number) {
   const query = `
     DELETE FROM reminders
     WHERE id = $1 AND user_id = $2
+    RETURNING id
   `;
   
-  return executeQuery(query, [reminderId, userId]);
+  const result = await executeQuery(query, [reminderId, userId]);
+  return result[0];
 }
 
 // Health data operations
@@ -157,7 +165,7 @@ export async function upsertHealthData(userId: number, data: {
 }) {
   const today = new Date().toISOString().split('T')[0];
   
-  const query = isProduction ? `
+  const query = `
     INSERT INTO health_data (user_id, date, steps, water_intake, sleep_hours, sleep_quality)
     VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (user_id, date) 
@@ -167,18 +175,9 @@ export async function upsertHealthData(userId: number, data: {
       sleep_hours = EXCLUDED.sleep_hours,
       sleep_quality = EXCLUDED.sleep_quality
     RETURNING id
-  ` : `
-    INSERT INTO health_data (userId, date, steps, waterIntake, sleepHours, sleepQuality)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    ON CONFLICT(userId, date) 
-    DO UPDATE SET 
-      steps = $3,
-      waterIntake = $4,
-      sleepHours = $5,
-      sleepQuality = $6
   `;
   
-  return executeQuery(query, [
+  const result = await executeQuery(query, [
     userId,
     today,
     data.steps,
@@ -186,20 +185,16 @@ export async function upsertHealthData(userId: number, data: {
     data.sleepHours,
     data.sleepQuality
   ]);
+  
+  return result[0];
 }
 
 export async function getHealthData(userId: number) {
-  const query = isProduction ? `
+  const query = `
     SELECT date, steps, water_intake as "waterIntake", 
            sleep_hours as "sleepHours", sleep_quality as "sleepQuality"
     FROM health_data
     WHERE user_id = $1
-    ORDER BY date DESC
-    LIMIT 7
-  ` : `
-    SELECT date, steps, waterIntake, sleepHours, sleepQuality
-    FROM health_data
-    WHERE userId = $1
     ORDER BY date DESC
     LIMIT 7
   `;
@@ -255,16 +250,9 @@ export async function updateTip(id: number, data: {
 }
 
 export async function deleteTip(id: number) {
-  const query = 'DELETE FROM tips WHERE id = $1';
+  const query = 'DELETE FROM tips WHERE id = $1 RETURNING id';
   const result = await executeQuery(query, [id]);
-  return result.changes > 0;
-}
-
-// Cleanup on exit (only for SQLite)
-if (!isProduction) {
-  process.on('exit', () => {
-    (db as any).close();
-  });
+  return result[0] != null;
 }
 
 export { db }; 

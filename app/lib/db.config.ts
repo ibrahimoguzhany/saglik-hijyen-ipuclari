@@ -1,11 +1,6 @@
 import { Pool } from 'pg';
-import Database from 'better-sqlite3';
-import path from 'path';
 
-// Environment-specific configuration
-const isProduction = process.env.NODE_ENV === 'production';
-
-// PostgreSQL configuration for production (Vercel)
+// PostgreSQL configuration
 const postgresConfig = {
   connectionString: process.env.POSTGRES_URL,
   ssl: {
@@ -13,24 +8,12 @@ const postgresConfig = {
   }
 };
 
-// SQLite configuration for development
-const sqliteConfig = {
-  filename: path.join(process.cwd(), 'health-data.db')
-};
-
-// Export the appropriate database instance based on environment
-export const getDb = () => {
-  if (isProduction) {
-    return new Pool(postgresConfig);
-  } else {
-    return new Database(sqliteConfig.filename);
-  }
+// Export database instance
+export const getDb = async () => {
+  return new Pool(postgresConfig);
 };
 
 // Helper function to format query results consistently
 export const formatQueryResult = (result: any) => {
-  if (isProduction) {
-    return result.rows;
-  }
-  return result;
+  return result.rows;
 }; 
