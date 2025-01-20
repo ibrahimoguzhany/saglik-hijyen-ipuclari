@@ -38,8 +38,7 @@ try {
       FOREIGN KEY(userId) REFERENCES users(id)
     );
 
-    DROP TABLE IF EXISTS reminders;
-    CREATE TABLE reminders (
+    CREATE TABLE IF NOT EXISTS reminders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId INTEGER NOT NULL,
       title TEXT NOT NULL,
@@ -130,6 +129,69 @@ try {
     `);
     updateStmt.run();
     console.log('Admin user role updated');
+  }
+
+  // Örnek hatırlatıcıları ekle
+  const reminderCount = db.prepare('SELECT COUNT(*) as count FROM reminders').get() as { count: number };
+  if (reminderCount.count === 0) {
+    console.log('Adding sample reminders...');
+    
+    // Önce kullanıcıyı bul
+    const user = db.prepare('SELECT id FROM users WHERE email = ?').get('ibrahimoguzhany@gmail.com') as { id: number } | undefined;
+    
+    if (user) {
+      const insertReminder = db.prepare(`
+        INSERT INTO reminders (userId, title, time, type, isActive)
+        VALUES (@userId, @title, @time, @type, @isActive)
+      `);
+
+      const reminders = [
+        {
+          userId: user.id,
+          title: 'Sabah Su İçmeyi Unutma',
+          time: '08:00',
+          type: 'water',
+          isActive: 1
+        },
+        {
+          userId: user.id,
+          title: 'Öğle İlaç Vakti',
+          time: '12:00',
+          type: 'medicine',
+          isActive: 1
+        },
+        {
+          userId: user.id,
+          title: 'Akşam Yürüyüşü',
+          time: '18:00',
+          type: 'exercise',
+          isActive: 1
+        },
+        {
+          userId: user.id,
+          title: 'Uyku Vakti',
+          time: '23:00',
+          type: 'sleep',
+          isActive: 1
+        },
+        {
+          userId: user.id,
+          title: 'Yemek Öncesi El Yıkama',
+          time: '19:30',
+          type: 'handwashing',
+          isActive: 1
+        }
+      ];
+
+      const transaction = db.transaction(() => {
+        for (const reminder of reminders) {
+          insertReminder.run(reminder);
+        }
+      });
+
+      transaction();
+      console.log('Sample reminders added successfully');
+    }
   }
 } catch (error) {
   console.error('Database initialization error:', error);
@@ -252,8 +314,10 @@ export function createReminder(userId: number, data: {
 
   return stmt.run({
     userId,
-    ...data,
-    isActive: data.isActive ?? true
+    title: data.title,
+    time: data.time,
+    type: data.type,
+    isActive: data.isActive ? 1 : 0
   });
 }
 
@@ -280,7 +344,7 @@ export function updateReminder(userId: number, reminderId: number, data: {
   return stmt.run({
     userId,
     reminderId,
-    isActive: data.isActive
+    isActive: data.isActive ? 1 : 0
   });
 }
 
@@ -295,29 +359,31 @@ export function deleteReminder(userId: number, reminderId: number) {
 
 // Sağlık verisi işlemleri
 export function upsertHealthData(userId: number, data: {
+  date: string;
   steps: number;
   waterIntake: number;
   sleepHours: number;
   sleepQuality: number;
 }) {
-  const today = new Date().toISOString().split('T')[0];
-  
   const stmt = db.prepare(`
     INSERT INTO health_data (userId, date, steps, waterIntake, sleepHours, sleepQuality)
-    VALUES (@userId, @date, @steps, @waterIntake, @sleepHours, @sleepQuality)
-    ON CONFLICT(userId, date) 
-    DO UPDATE SET 
-      steps = @steps,
-      waterIntake = @waterIntake,
-      sleepHours = @sleepHours,
-      sleepQuality = @sleepQuality
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(userId, date)
+    DO UPDATE SET
+      steps = excluded.steps,
+      waterIntake = excluded.waterIntake,
+      sleepHours = excluded.sleepHours,
+      sleepQuality = excluded.sleepQuality
   `);
 
-  return stmt.run({
+  stmt.run(
     userId,
-    date: today,
-    ...data
-  });
+    data.date,
+    data.steps,
+    data.waterIntake,
+    data.sleepHours,
+    data.sleepQuality
+  );
 }
 
 export function getHealthData(userId: number) {
@@ -326,7 +392,6 @@ export function getHealthData(userId: number) {
     FROM health_data
     WHERE userId = ?
     ORDER BY date DESC
-    LIMIT 7
   `);
 
   return stmt.all(userId);

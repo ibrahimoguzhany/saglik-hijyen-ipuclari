@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 interface DataEntryFormProps {
   onSubmit: (data: {
+    date: string;
     steps: number;
     waterIntake: number;
     sleepHours: number;
@@ -14,6 +15,7 @@ interface DataEntryFormProps {
 
 export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProps) {
   const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0], // Default to today's date
     steps: '',
     waterIntake: '',
     sleepHours: '',
@@ -23,6 +25,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
+      date: formData.date,
       steps: parseInt(formData.steps) || 0,
       waterIntake: parseInt(formData.waterIntake) || 0,
       sleepHours: parseFloat(formData.sleepHours) || 0,
@@ -30,6 +33,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
     });
     // Form gönderildikten sonra temizle
     setFormData({
+      date: new Date().toISOString().split('T')[0], // Reset to today's date
       steps: '',
       waterIntake: '',
       sleepHours: '',
@@ -42,6 +46,21 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
       <h3 className="text-lg font-medium text-gray-900 mb-4">Günlük Veri Girişi</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
+          <label htmlFor="date" className="block text-sm font-medium text-gray-900">
+            📅 Tarih
+          </label>
+          <input
+            type="date"
+            id="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700 cursor-pointer
+            [&::-webkit-calendar-picker-indicator]:bg-transparent [&::-webkit-calendar-picker-indicator]:cursor-pointer
+            [&::-webkit-calendar-picker-indicator]:hover:opacity-60 appearance-none bg-white px-3 py-2"
+            required
+          />
+        </div>
+        <div>
           <label htmlFor="steps" className="block text-sm font-medium text-gray-900">
             👣 Adım Sayısı
           </label>
@@ -52,7 +71,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
             max="100000"
             value={formData.steps}
             onChange={(e) => setFormData(prev => ({ ...prev, steps: e.target.value }))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 font-medium placeholder-gray-600"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700 bg-white px-3 py-2"
             placeholder="Örn: 8000"
           />
         </div>
@@ -69,7 +88,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
             step="100"
             value={formData.waterIntake}
             onChange={(e) => setFormData(prev => ({ ...prev, waterIntake: e.target.value }))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 font-medium placeholder-gray-600"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700 bg-white px-3 py-2"
             placeholder="Örn: 2000"
           />
         </div>
@@ -86,7 +105,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
             step="0.5"
             value={formData.sleepHours}
             onChange={(e) => setFormData(prev => ({ ...prev, sleepHours: e.target.value }))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 font-medium placeholder-gray-600"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700 bg-white px-3 py-2"
             placeholder="Örn: 7.5"
           />
         </div>
@@ -102,7 +121,7 @@ export default function DataEntryForm({ onSubmit, isLoading }: DataEntryFormProp
             max="100"
             value={formData.sleepQuality}
             onChange={(e) => setFormData(prev => ({ ...prev, sleepQuality: e.target.value }))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 font-medium placeholder-gray-600"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700 bg-white px-3 py-2"
             placeholder="Örn: 85"
           />
         </div>

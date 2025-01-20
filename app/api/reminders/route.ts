@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     const { userId } = verified.payload as unknown as JWTPayload;
 
     const data = await request.json();
+    console.log('Received reminder data:', data);
     
     if (!data.title || !data.time || !data.type) {
       return NextResponse.json(
@@ -57,23 +58,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = createReminder(userId, {
-      title: data.title,
-      time: data.time,
-      type: data.type
-    });
+    try {
+      console.log('Creating reminder for user:', userId, 'with data:', data);
+      const result = createReminder(userId, {
+        title: data.title,
+        time: data.time,
+        type: data.type,
+        isActive: data.isActive
+      });
+      console.log('Reminder creation result:', result);
 
-    return NextResponse.json({
-      id: result.lastInsertRowid,
-      title: data.title,
-      time: data.time,
-      type: data.type,
-      isActive: true
-    });
-  } catch (error) {
+      return NextResponse.json({
+        id: result.lastInsertRowid,
+        title: data.title,
+        time: data.time,
+        type: data.type,
+        isActive: true
+      });
+    } catch (dbError: any) {
+      console.error('Database error:', dbError);
+      return NextResponse.json(
+        { error: `Veritabanı hatası: ${dbError.message}` },
+        { status: 500 }
+      );
+    }
+  } catch (error: any) {
     console.error('Create reminder error:', error);
     return NextResponse.json(
-      { error: 'Hatırlatıcı oluşturulamadı' },
+      { error: `Hatırlatıcı oluşturulamadı: ${error.message}` },
       { status: 500 }
     );
   }

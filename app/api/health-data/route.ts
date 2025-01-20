@@ -4,6 +4,7 @@ import { upsertHealthData, getHealthData } from '@/app/lib/db';
 interface HealthDataRequest {
   userId: number;
   data: {
+    date: string;
     steps: number;
     waterIntake: number;
     sleepHours: number;
@@ -18,6 +19,13 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json(
         { error: 'Kullanıcı ID\'si gerekli' },
+        { status: 400 }
+      );
+    }
+
+    if (!data.date) {
+      return NextResponse.json(
+        { error: 'Tarih alanı gerekli' },
         { status: 400 }
       );
     }

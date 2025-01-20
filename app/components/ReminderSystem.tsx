@@ -24,11 +24,60 @@ export default function ReminderSystem() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [newReminder, setNewReminder] = useState({
     title: '',
     time: '',
     type: 'water'
   });
+
+  useEffect(() => {
+    // Bildirim izni kontrolü
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      try {
+        const permission = await Notification.requestPermission();
+        setNotificationPermission(permission);
+      } catch (error) {
+        console.error('Bildirim izni alınamadı:', error);
+      }
+    }
+  };
+
+  const scheduleReminders = (reminders: Reminder[]) => {
+    reminders.forEach(reminder => {
+      if (reminder.isActive) {
+        const [hours, minutes] = reminder.time.split(':').map(Number);
+        
+        // Her dakika kontrol et
+        const interval = setInterval(() => {
+          const now = new Date();
+          if (now.getHours() === hours && now.getMinutes() === minutes) {
+            console.log('Bildirim gönderiliyor:', reminder.title);
+            console.log('Bildirim izni:', notificationPermission);
+            if (notificationPermission === 'granted') {
+console.log('Bildirim izni:', notificationPermission);
+              const emoji = reminderTypes[reminder.type as keyof typeof reminderTypes].split(' ')[0];
+              new Notification(`${emoji} ${reminder.title}`, {
+                body: `${reminderTypes[reminder.type as keyof typeof reminderTypes]} zamanı!`,
+                icon: '/favicon.ico'
+              });
+              console.log('Bildirim gönderildi:', reminder.title);
+              
+            }
+          }
+        }, 10000); // Her dakika kontrol et
+
+        // Cleanup
+        return () => clearInterval(interval);
+      }
+    });
+  };
 
   useEffect(() => {
     if (!authLoading) {
@@ -40,6 +89,12 @@ export default function ReminderSystem() {
       }
     }
   }, [user, authLoading]);
+
+  useEffect(() => {
+    if (reminders.length > 0) {
+      scheduleReminders(reminders);
+    }
+  }, [reminders, notificationPermission]);
 
   const fetchReminders = async () => {
     try {
@@ -69,7 +124,10 @@ export default function ReminderSystem() {
       const response = await fetch('/api/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newReminder)
+        body: JSON.stringify({
+          ...newReminder,
+          isActive: true
+        })
       });
 
       if (!response.ok) {
@@ -153,6 +211,29 @@ export default function ReminderSystem() {
 
   return (
     <div className="space-y-4">
+      {notificationPermission !== 'granted' && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                Hatırlatıcıları alabilmek için bildirim iznine ihtiyacımız var.
+                <button
+                  onClick={requestNotificationPermission}
+                  className="ml-2 font-medium text-yellow-700 underline hover:text-yellow-600"
+                >
+                  İzin Ver
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleAddReminder} className="space-y-4">
         <div className="flex flex-col space-y-2">
           <input
@@ -208,9 +289,9 @@ export default function ReminderSystem() {
                 onChange={() => toggleReminder(reminder.id)}
                 className="h-5 w-5 text-blue-500"
               />
-              <div className={reminder.isActive ? '' : 'line-through text-gray-500'}>
-                <div className="font-medium">{reminder.title}</div>
-                <div className="text-sm text-gray-600">
+              <div className={reminder.isActive ? 'text-gray-900' : 'line-through text-gray-500'}>
+                <div className="font-semibold text-base">{reminder.title}</div>
+                <div className="text-sm text-gray-700">
                   {reminderTypes[reminder.type as keyof typeof reminderTypes]} - {reminder.time}
                 </div>
               </div>
