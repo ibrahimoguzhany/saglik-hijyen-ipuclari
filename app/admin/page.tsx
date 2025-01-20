@@ -2,9 +2,18 @@
 
 import { useAuth } from '@/app/hooks/useAuth';
 import Link from 'next/link';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'admin') {
     return (

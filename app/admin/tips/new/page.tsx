@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hooks/useAuth';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 interface Tip {
   title: string;
@@ -13,7 +14,7 @@ interface Tip {
 
 export default function NewTipPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tip, setTip] = useState<Tip>({
@@ -53,6 +54,14 @@ export default function NewTipPage() {
     const { name, value } = e.target;
     setTip(prev => ({ ...prev, [name]: value }));
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'admin') {
     return (
@@ -147,9 +156,9 @@ export default function NewTipPage() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
             >
-              {saving ? 'Ekleniyor...' : 'Ekle'}
+              {saving ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
           </div>
         </form>

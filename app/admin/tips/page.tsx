@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hooks/useAuth';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Tip {
   id: number;
@@ -14,7 +15,7 @@ interface Tip {
 }
 
 export default function AdminTipsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,24 +23,26 @@ export default function AdminTipsPage() {
   const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchTips = async () => {
-      try {
-        const response = await fetch('/api/admin/tips');
-        if (!response.ok) {
-          throw new Error('İpuçları getirilemedi');
+    if (!authLoading && user?.role === 'admin') {
+      const fetchTips = async () => {
+        try {
+          const response = await fetch('/api/admin/tips');
+          if (!response.ok) {
+            throw new Error('İpuçları getirilemedi');
+          }
+          const data = await response.json();
+          setTips(data);
+        } catch (error) {
+          console.error('Fetch tips error:', error);
+          setError('İpuçları yüklenemedi');
+        } finally {
+          setLoading(false);
         }
-        const data = await response.json();
-        setTips(data);
-      } catch (error) {
-        console.error('Fetch tips error:', error);
-        setError('İpuçları yüklenemedi');
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchTips();
-  }, []);
+      fetchTips();
+    }
+  }, [authLoading, user]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Bu ipucunu silmek istediğinizden emin misiniz?')) {
@@ -67,6 +70,14 @@ export default function AdminTipsPage() {
       setDeleteLoading(null);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'admin') {
     return (

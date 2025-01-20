@@ -25,6 +25,7 @@ export default function ReminderSystem() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [shownNotifications, setShownNotifications] = useState<Set<string>>(new Set());
   const [newReminder, setNewReminder] = useState({
     title: '',
     time: '',
@@ -36,6 +37,19 @@ export default function ReminderSystem() {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
+  }, []);
+
+  // Her gün gece yarısında shown notifications'ı sıfırla
+  useEffect(() => {
+    const resetShownNotifications = () => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        setShownNotifications(new Set());
+      }
+    };
+
+    const resetInterval = setInterval(resetShownNotifications, 60000);
+    return () => clearInterval(resetInterval);
   }, []);
 
   const requestNotificationPermission = async () => {
@@ -50,33 +64,49 @@ export default function ReminderSystem() {
   };
 
   const scheduleReminders = (reminders: Reminder[]) => {
+    const intervals: NodeJS.Timeout[] = [];
+
     reminders.forEach(reminder => {
       if (reminder.isActive) {
-        const [hours, minutes] = reminder.time.split(':').map(Number);
-        
-        // Her dakika kontrol et
-        const interval = setInterval(() => {
+        const checkAndNotify = () => {
           const now = new Date();
-          if (now.getHours() === hours && now.getMinutes() === minutes) {
-            console.log('Bildirim gönderiliyor:', reminder.title);
-            console.log('Bildirim izni:', notificationPermission);
-            if (notificationPermission === 'granted') {
-console.log('Bildirim izni:', notificationPermission);
-              const emoji = reminderTypes[reminder.type as keyof typeof reminderTypes].split(' ')[0];
-              new Notification(`${emoji} ${reminder.title}`, {
-                body: `${reminderTypes[reminder.type as keyof typeof reminderTypes]} zamanı!`,
-                icon: '/favicon.ico'
-              });
-              console.log('Bildirim gönderildi:', reminder.title);
-              
+          const [hours, minutes] = reminder.time.split(':').map(Number);
+          const currentHours = now.getHours();
+          const currentMinutes = now.getMinutes();
+          const notificationKey = `${reminder.id}-${now.toDateString()}`;
+
+          if (currentHours === hours && currentMinutes === minutes) {
+            if (notificationPermission === 'granted' && !shownNotifications.has(notificationKey)) {
+              try {
+                const emoji = reminderTypes[reminder.type as keyof typeof reminderTypes].split(' ')[0];
+                new Notification(`${emoji} ${reminder.title}`, {
+                  body: `${reminderTypes[reminder.type as keyof typeof reminderTypes]} zamanı!`,
+                  icon: '/favicon.ico',
+                  requireInteraction: true,
+                  silent: false
+                });
+
+                // Bildirimi gösterildi olarak işaretle
+                setShownNotifications(prev => new Set(prev).add(notificationKey));
+              } catch (error) {
+                console.error('Bildirim gösterme hatası:', error);
+              }
             }
           }
-        }, 10000); // Her dakika kontrol et
+        };
 
-        // Cleanup
-        return () => clearInterval(interval);
+        // İlk kontrol
+        checkAndNotify();
+
+        // Her 5 saniyede bir kontrol et
+        const interval = setInterval(checkAndNotify, 5000);
+        intervals.push(interval);
       }
     });
+
+    return () => {
+      intervals.forEach(interval => clearInterval(interval));
+    };
   };
 
   useEffect(() => {
@@ -92,7 +122,8 @@ console.log('Bildirim izni:', notificationPermission);
 
   useEffect(() => {
     if (reminders.length > 0) {
-      scheduleReminders(reminders);
+      const cleanup = scheduleReminders(reminders);
+      return cleanup;
     }
   }, [reminders, notificationPermission]);
 
@@ -228,6 +259,33 @@ console.log('Bildirim izni:', notificationPermission);
                 >
                   İzin Ver
                 </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && error.includes('Sistem bildirimlerini kontrol edin') && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                {error}
+                <a
+                  href="ms-settings:notifications"
+                  className="ml-2 font-medium underline hover:text-red-600"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.open('ms-settings:notifications', '_blank');
+                  }}
+                >
+                  Windows Bildirim Ayarlarını Aç
+                </a>
               </p>
             </div>
           </div>

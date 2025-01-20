@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hooks/useAuth';
+import LoadingSpinner from '../../../../components/LoadingSpinner';
 
 interface PageProps {
   params: Promise<{
@@ -21,7 +22,7 @@ interface Tip {
 export default function EditTipPage({ params }: PageProps) {
   const resolvedParams = React.use(params);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,14 @@ export default function EditTipPage({ params }: PageProps) {
     setTip(prev => prev ? { ...prev, [name]: value } : null);
   };
 
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   if (!user || user.role !== 'admin') {
     return (
       <div className="text-center py-4 text-red-500">
@@ -94,9 +103,7 @@ export default function EditTipPage({ params }: PageProps) {
           <h1 className="text-2xl font-bold text-gray-900">İpucu Düzenle</h1>
         </div>
 
-        {loading ? (
-          <div className="text-center py-4">Yükleniyor...</div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : tip ? (
           <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
@@ -171,7 +178,7 @@ export default function EditTipPage({ params }: PageProps) {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
               >
                 {saving ? 'Kaydediliyor...' : 'Kaydet'}
               </button>
